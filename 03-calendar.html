@@ -1,0 +1,705 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通用日曆待辦規劃小麥麥</title>
+<style>
+:root {
+--bg: #f4f4f9;
+--text: #333;
+--primary: #4a69bd;
+--primary-text: #ffffff;
+--card-bg: #ffffff;
+--border: #cccccc;
+--focus-outline: #e67e22;
+--header-bg: #2f3542;
+--header-text: #ffffff;
+--today-bg: #fff9db;
+--weekend-text: #e74c3c;
+}
+code
+Code
+/* 高對比主題設定 */
+body[data-theme="dark-white"] {
+  --bg: #000000; --text: #ffffff; --primary: #ffffff; --primary-text: #000000;
+  --card-bg: #000000; --border: #ffffff; --focus-outline: #00ff00;
+  --header-bg: #333333; --header-text: #ffffff; --today-bg: #222222; --weekend-text: #ff9f43;
+}
+body[data-theme="dark-yellow"] {
+  --bg: #000000; --text: #ffff00; --primary: #ffff00; --primary-text: #000000;
+  --card-bg: #000000; --border: #ffff00; --focus-outline: #ffffff;
+  --header-bg: #333300; --header-text: #ffff00; --today-bg: #222200; --weekend-text: #ffff00;
+}
+body[data-theme="yellow-black"] {
+  --bg: #ffff00; --text: #000000; --primary: #000000; --primary-text: #ffff00;
+  --card-bg: #ffff00; --border: #000000; --focus-outline: #ff0000;
+  --header-bg: #cccc00; --header-text: #000000; --today-bg: #ffffcc; --weekend-text: #cc0000;
+}
+body[data-theme="blue-white"] {
+  --bg: #000033; --text: #ffffff; --primary: #ffffff; --primary-text: #000033;
+  --card-bg: #000033; --border: #ffffff; --focus-outline: #ffff00;
+  --header-bg: #000066; --header-text: #ffffff; --today-bg: #000055; --weekend-text: #ffcccc;
+}
+
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  transition: background 0.3s, color 0.3s;
+}
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); border: 0;
+}
+
+.skip-link {
+  position: absolute; top: -40px; left: 0; background: var(--primary);
+  color: var(--primary-text); padding: 8px; z-index: 100;
+}
+.skip-link:focus { top: 0; outline: 3px solid var(--focus-outline); }
+
+header {
+  background-color: var(--header-bg);
+  color: var(--header-text);
+  padding: 1rem;
+  text-align: center;
+}
+.theme-buttons { margin: 10px 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+button, .btn {
+  padding: 10px 16px; font-size: 1rem; cursor: pointer;
+  background-color: var(--primary); color: var(--primary-text);
+  border: 2px solid var(--border); border-radius: 4px;
+}
+button:focus, input:focus, textarea:focus, a:focus {
+  outline: 4px solid var(--focus-outline);
+  outline-offset: 2px;
+}
+
+main { max-width: 1000px; margin: 0 auto; padding: 1rem; }
+.card {
+  background-color: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+.linear-stack > section { margin-bottom: 2.5rem; }
+
+/* Layer 1: Now Grid */
+.now-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem; margin-bottom: 1rem;
+}
+.now-item { border-bottom: 1px solid var(--border); padding: 5px; }
+.now-item strong { display: block; font-size: 0.9rem; opacity: 0.8; }
+
+/* Layer 2: Quick Form */
+.quick-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;
+}
+textarea { width: 100%; min-height: 80px; margin-bottom: 10px; font-size: 1.1rem; padding: 8px; }
+input[type="date"], input[type="text"] { padding: 8px; font-size: 1rem; width: 100%; }
+
+/* Layer 3: Calendar */
+.calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+#calendarGrid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 2px; background-color: var(--border); border: 2px solid var(--border);
+}
+.calendar-header {
+  background-color: var(--header-bg); color: var(--header-text);
+  text-align: center; padding: 5px; font-weight: bold; font-size: 0.8rem;
+}
+.day-button {
+  background-color: var(--card-bg); color: var(--text); border: none;
+  min-height: 80px; padding: 5px; display: flex; flex-direction: column;
+  align-items: flex-start; cursor: pointer; position: relative;
+}
+.day-button:hover { background-color: var(--today-bg); }
+.day-button.today { background-color: var(--today-bg); border: 2px solid var(--primary) !important; }
+.day-button.other-month { opacity: 0.4; }
+.day-num { font-weight: bold; font-size: 1.1rem; }
+.day-lunar { font-size: 0.75rem; }
+.day-badge { font-size: 0.7rem; color: var(--primary); margin-top: 4px; font-weight: bold; }
+
+/* Entry List */
+.entry-row {
+  display: flex; gap: 10px; align-items: center; padding: 8px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.entry-row input[type="text"] { flex: 1; }
+.entry-row input[type="checkbox"] { width: 25px; height: 25px; }
+
+/* Layer 4: Output */
+.output-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+
+.bottom-nav { text-align: center; padding: 2rem; }
+.back-btn { display: inline-block; text-decoration: none; font-weight: bold; font-size: 1.2rem; }
+
+@media print {
+  .theme-buttons, .output-grid, .bottom-nav, .quick-form, .calendar-controls, .skip-link, .help-card {
+    display: none !important;
+  }
+}
+</style>
+</head>
+<body data-theme="default">
+<a href="#main-content" class="skip-link">跳至主要內容</a>
+<div id="liveRegion" class="visually-hidden" aria-live="polite"></div>
+<header>
+<h1>通用日曆待辦規劃小麥麥</h1>
+<p>專為視障與鍵盤使用者設計的無障礙行事曆</p>
+<div class="theme-buttons" role="group" aria-label="佈景主題切換">
+<button onclick="setTheme('default')">預設自然色</button>
+<button onclick="setTheme('dark-white')">黑底白字</button>
+<button onclick="setTheme('dark-yellow')">黑底黃字</button>
+<button onclick="setTheme('yellow-black')">黃底黑字</button>
+<button onclick="setTheme('blue-white')">深藍底白字</button>
+</div>
+<a href="index.html" class="back-btn" style="color: var(--header-text);">⬅ 返回大廳</a>
+</header>
+<main id="main-content" class="linear-stack">
+<!-- Layer 0: Weather -->
+<section id="layer0" class="card" aria-labelledby="h-weather">
+<h2 id="h-weather">所在地天氣</h2>
+<button onclick="fetchWeather()">偵測所在地天氣</button>
+<div id="weatherReport" style="margin-top: 10px;" role="status">尚未取得天氣資訊。</div>
+</section>
+<!-- Layer 1: Status -->
+<section id="layer1" class="card" aria-labelledby="h-status">
+<h2 id="h-status">目前狀態與今日規劃</h2>
+<div class="now-grid">
+<div class="now-item"><strong>國曆日期</strong><span id="statDate"></span></div>
+<div class="now-item"><strong>農曆日期</strong><span id="statLunar"></span></div>
+<div class="now-item"><strong>現在時間</strong><span id="statTime"></span></div>
+<div class="now-item"><strong>目前時段規畫</strong><span id="statCurrentTask">無</span></div>
+</div>
+<h3>今日待辦清單</h3>
+<div id="todayChecklist"></div>
+</section>
+<!-- Layer 2: Quick Add -->
+<section id="layer2" class="card" aria-labelledby="h-quick">
+<h2 id="h-quick">新增待辦事項 (F2 快速編輯)</h2>
+<form id="quickForm" onsubmit="handleQuickAdd(event)">
+<div class="quick-grid">
+<div>
+<label for="quickDate">日期</label>
+<input type="date" id="quickDate" required>
+</div>
+<div>
+<label for="quickTime">時段 (例如: 09:00 或 早上)</label>
+<input type="text" id="quickTime" placeholder="自訂時段">
+</div>
+</div>
+<label for="quickTodo">待辦內容</label>
+<textarea id="quickTodo" placeholder="輸入待辦內容..." required></textarea>
+<div style="display:flex; gap:10px;">
+<button type="submit">新增到月曆</button>
+<button type="button" onclick="clearQuickForm()" style="background:#666;">清空編輯區</button>
+</div>
+<p id="saveStatus" aria-live="polite" style="font-size:0.9rem; margin-top:5px;"></p>
+</form>
+</section>
+<!-- Layer 3: Calendar Grid -->
+<section id="layer3" class="card" aria-labelledby="h-calendar">
+<h2 id="h-calendar">當月月曆</h2>
+<div class="calendar-controls">
+<label for="jumpDate">跳選日期: </label>
+<input type="date" id="jumpDate" onchange="jumpToDate(this.value)">
+<h3 id="calendarTitle"></h3>
+</div>
+code
+Code
+<div id="calendarGrid" role="grid" aria-label="日曆格">
+  <!-- Generated by JS -->
+</div>
+
+<div id="dayDetailArea" style="margin-top: 2rem; border-top: 4px solid var(--primary); padding-top: 1rem;">
+  <h3 id="detailTitle">請選擇日期</h3>
+  <div style="margin-bottom: 1rem;">
+    <button onclick="addEmptyEntry()">＋ 新增空白待辦</button>
+    <button onclick="saveEntries()" style="background-color: #27ae60;">儲存變更</button>
+    <button onclick="clearDayEntries()" style="background-color: #c0392b;">清除本日所有紀錄</button>
+  </div>
+  <div id="entryList" role="list"></div>
+</div>
+</section>
+<!-- Layer 4: Export -->
+<section id="layer4" class="card" aria-labelledby="h-output">
+<h2 id="h-output">輸出與備份選項</h2>
+<div style="margin-bottom: 1rem;">
+<label for="gmailAddress">Gmail 收件人信箱:</label>
+<input type="text" id="gmailAddress" placeholder="example@gmail.com">
+</div>
+<div class="output-grid">
+<button onclick="downloadTXT()">下載本日 TXT</button>
+<button onclick="window.print()">列印/PDF</button>
+<button onclick="exportJSON()">匯出 JSON 備份</button>
+<button onclick="triggerImport()">載入 JSON 備份</button>
+<button onclick="sendGmail()">發送 Gmail</button>
+<button onclick="downloadICS()">匯出 Google 日曆 (ICS)</button>
+</div>
+<input type="file" id="importFile" style="display:none" accept=".json" onchange="handleImport(event)">
+</section>
+<section class="card help-card" aria-labelledby="h-help">
+<h2 id="h-help">快速操作說明</h2>
+<ul>
+<li><strong>Alt + 1 ~ 4</strong>：切換到不同的 Layer 區塊。</li>
+<li><strong>F2</strong>：快速跳轉到新增待辦的內容輸入框。</li>
+<li><strong>Tab</strong>：在按鈕與輸入框之間移動。</li>
+<li><strong>月曆操作</strong>：點選日期可查看與編輯明細。</li>
+</ul>
+</section>
+</main>
+<div class="bottom-nav">
+<a href="index.html" class="back-btn">⬅ 返回大廳</a>
+</div>
+<script>
+'use strict';
+
+// --- Configuration & Constants ---
+const DB_KEY = 'universal-calendar-todo-maimai-morandi-v3';
+const WEATHER_CACHE_KEY = 'maimai_weather_cache';
+
+let db = JSON.parse(localStorage.getItem(DB_KEY)) || {};
+let currentViewDate = new Date(); // 目前月曆顯示的月份
+let selectedDateKey = dateKeyFromDate(new Date());
+
+// --- Core Utilities ---
+
+function dateKeyFromDate(date) {
+const y = date.getFullYear();
+const m = String(date.getMonth() + 1).padStart(2, '0');
+const d = String(date.getDate()).padStart(2, '0');
+return `${y}-${m}-${d}`;
+}
+
+function announce(msg) {
+const region = document.getElementById('liveRegion');
+region.textContent = msg;
+}
+
+function setTheme(theme) {
+document.body.setAttribute('data-theme', theme);
+announce(`已切換主題至 ${theme}`);
+}
+
+function saveDB() {
+localStorage.setItem(DB_KEY, JSON.stringify(db));
+}
+
+// --- Date & Time & Lunar ---
+
+function updateClock() {
+const now = new Date();
+const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+const rocYear = now.getFullYear() - 1911;
+
+document.getElementById('statDate').textContent = `民國 ${rocYear} 年 ${now.toLocaleDateString('zh-TW', options)}`;
+document.getElementById('statTime').textContent = now.toLocaleTimeString('zh-TW');
+
+// 簡易農曆 (示意)
+document.getElementById('statLunar').textContent = getSimpleLunar(now);
+
+updateCurrentTask(now);
+}
+
+function getSimpleLunar(date) {
+// 此處使用靜態映射與簡單算法模擬農曆與節日，正式應使用複雜演算法或 API
+// 為符合單一檔案無依賴，僅列出主要節日。
+const m = date.getMonth() + 1;
+const d = date.getDate();
+if (m === 1 && d === 1) return "正月初一 (春節)";
+if (m === 5 && d === 5) return "五月初五 (端午節)";
+if (m === 8 && d === 15) return "八月十五 (中秋節)";
+return "農曆日期詳見日曆卡片";
+}
+
+function updateCurrentTask(now) {
+const key = dateKeyFromDate(now);
+const tasks = db[key] || [];
+const currentHour = now.getHours();
+const currentMin = now.getMinutes();
+const currentTimeStr = `${String(currentHour).padStart(2,'0')}:${String(currentMin).padStart(2,'0')}`;
+
+// 尋找符合目前時間的 Task (簡易字串比對)
+const activeTask = tasks.find(t => t.time && currentTimeStr >= t.time);
+document.getElementById('statCurrentTask').textContent = activeTask ? `${activeTask.time} ${activeTask.content}` : "目前無排定事項";
+}
+
+// --- Weather Service ---
+
+async function fetchWeather() {
+const report = document.getElementById('weatherReport');
+report.textContent = "正在取得位置...";
+announce("正在取得位置資訊");
+
+if (!navigator.geolocation) {
+report.textContent = "瀏覽器不支援定位功能";
+return;
+}
+
+navigator.geolocation.getCurrentPosition(async (pos) => {
+const { latitude, longitude } = pos.coords;
+try {
+const resp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=auto`);
+const data = await resp.json();
+const cw = data.current_weather;
+const info = `氣溫: ${cw.temperature}°C, 風速: ${cw.windspeed} km/h, 天氣代碼: ${cw.weathercode}`;
+report.textContent = `經緯度 (${latitude.toFixed(2)}, ${longitude.toFixed(2)}) 的天氣：${info}`;
+announce(`天氣更新：${info}`);
+} catch (e) {
+report.textContent = "天氣 API 呼叫失敗";
+}
+}, () => {
+report.textContent = "無法取得您的位置。";
+});
+}
+
+// --- Checklist / Entry Management ---
+
+function renderTodayChecklist() {
+const container = document.getElementById('todayChecklist');
+const key = dateKeyFromDate(new Date());
+const tasks = db[key] || [];
+
+if (tasks.length === 0) {
+container.innerHTML = '<p>今日無待辦事項。</p>';
+return;
+}
+
+container.innerHTML = tasks.map((t, idx) => `
+<div class="entry-row">
+<input type="checkbox" id="today-chk-${idx}" ${t.done ? 'checked' : ''} onchange="toggleTask('${key}', ${idx})">
+<label for="today-chk-${idx}" style="text-decoration: ${t.done ? 'line-through' : 'none'}">
+[${t.time || '全天'}] ${t.content}
+</label>
+</div>
+`).join('');
+}
+
+function toggleTask(dateKey, index) {
+if (db[dateKey] && db[dateKey][index]) {
+db[dateKey][index].done = !db[dateKey][index].done;
+saveDB();
+renderTodayChecklist();
+if (selectedDateKey === dateKey) renderDayDetails(dateKey);
+announce("狀態已更新");
+}
+}
+
+// --- Layer 2 Quick Form ---
+
+function handleQuickAdd(e) {
+e.preventDefault();
+const dateVal = document.getElementById('quickDate').value;
+const timeVal = document.getElementById('quickTime').value;
+const todoVal = document.getElementById('quickTodo').value;
+
+if (!db[dateVal]) db[dateVal] = [];
+db[dateVal].push({
+id: Date.now(),
+time: timeVal,
+content: todoVal,
+done: false
+});
+
+saveDB();
+document.getElementById('saveStatus').textContent = `已成功新增到 ${dateVal}`;
+announce(`已新增待辦事項至 ${dateVal}`);
+
+renderCalendar();
+renderTodayChecklist();
+if (selectedDateKey === dateVal) renderDayDetails(dateVal);
+
+// Clear only content
+document.getElementById('quickTodo').value = '';
+}
+
+function clearQuickForm() {
+document.getElementById('quickForm').reset();
+document.getElementById('saveStatus').textContent = '';
+}
+
+// --- Layer 3 Calendar Logic ---
+
+function renderCalendar() {
+const grid = document.getElementById('calendarGrid');
+const title = document.getElementById('calendarTitle');
+grid.innerHTML = '';
+
+const year = currentViewDate.getFullYear();
+const month = currentViewDate.getMonth();
+title.textContent = `${year}年 ${month + 1}月`;
+
+// Headers
+const days = ['日', '一', '二', '三', '四', '五', '六'];
+days.forEach(d => {
+const div = document.createElement('div');
+div.className = 'calendar-header';
+div.textContent = d;
+grid.appendChild(div);
+});
+
+const firstDay = new Date(year, month, 1).getDay();
+const lastDate = new Date(year, month + 1, 0).getDate();
+const prevLastDate = new Date(year, month, 0).getDate();
+
+// Create 42 cells (7x6)
+for (let i = 0; i < 42; i++) {
+const cellIdx = i - firstDay + 1;
+let d = cellIdx;
+let m = month;
+let y = year;
+let isOtherMonth = false;
+
+if (cellIdx <= 0) {
+d = prevLastDate + cellIdx;
+m = month - 1;
+isOtherMonth = true;
+} else if (cellIdx > lastDate) {
+d = cellIdx - lastDate;
+m = month + 1;
+isOtherMonth = true;
+}
+
+const cellDate = new Date(y, m, d);
+const key = dateKeyFromDate(cellDate);
+const isToday = key === dateKeyFromDate(new Date());
+
+const btn = document.createElement('button');
+btn.className = `day-button ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`;
+btn.setAttribute('aria-label', `${y}年${m+1}月${d}日，${db[key] ? '有'+db[key].length+'項紀錄' : '無紀錄'}`);
+btn.onclick = () => selectDate(key);
+
+let holidayText = "";
+if (m === 0 && d === 1) holidayText = "元旦";
+if (m === 9 && d === 10) holidayText = "國慶";
+
+btn.innerHTML = `
+<span class="day-num">${d}</span>
+<span class="day-lunar">${holidayText}</span>
+${db[key] && db[key].length > 0 ? `<span class="day-badge">● ${db[key].length} 項</span>` : ''}
+`;
+
+grid.appendChild(btn);
+}
+}
+
+function selectDate(key) {
+selectedDateKey = key;
+renderDayDetails(key);
+announce(`選取日期 ${key}`);
+document.getElementById('detailTitle').focus();
+}
+
+function jumpToDate(val) {
+if (!val) return;
+const d = new Date(val);
+currentViewDate = new Date(d.getFullYear(), d.getMonth(), 1);
+renderCalendar();
+selectDate(val);
+}
+
+function renderDayDetails(key) {
+const container = document.getElementById('entryList');
+const title = document.getElementById('detailTitle');
+const entries = db[key] || [];
+
+title.textContent = `日期：${key} 的紀錄詳情`;
+container.innerHTML = '';
+
+if (entries.length === 0) {
+container.innerHTML = '<p>本日無紀錄。</p>';
+} else {
+entries.forEach((en, idx) => {
+const div = document.createElement('div');
+div.className = 'entry-row';
+div.innerHTML = `
+<input type="checkbox" ${en.done ? 'checked' : ''} onchange="updateEntryProp(${idx}, 'done', this.checked)" aria-label="完成狀態">
+<input type="text" value="${en.time || ''}" onchange="updateEntryProp(${idx}, 'time', this.value)" placeholder="時間" style="width: 80px;">
+<input type="text" value="${en.content || ''}" onchange="updateEntryProp(${idx}, 'content', this.value)" placeholder="內容">
+<button onclick="removeEntry(${idx})" style="background:#c0392b; padding: 5px 10px;">刪除</button>
+`;
+container.appendChild(div);
+});
+}
+}
+
+function updateEntryProp(idx, prop, val) {
+if (db[selectedDateKey]) {
+db[selectedDateKey][idx][prop] = val;
+}
+}
+
+function addEmptyEntry() {
+if (!db[selectedDateKey]) db[selectedDateKey] = [];
+db[selectedDateKey].push({ id: Date.now(), time: '', content: '', done: false });
+renderDayDetails(selectedDateKey);
+announce("已新增一條空白紀錄");
+}
+
+function removeEntry(idx) {
+db[selectedDateKey].splice(idx, 1);
+renderDayDetails(selectedDateKey);
+announce("已刪除紀錄");
+}
+
+function saveEntries() {
+saveDB();
+renderCalendar();
+renderTodayChecklist();
+announce("已儲存變更至資料庫");
+}
+
+function clearDayEntries() {
+if (confirm("確定要清除本日所有待辦事項嗎？")) {
+delete db[selectedDateKey];
+saveDB();
+renderDayDetails(selectedDateKey);
+renderCalendar();
+renderTodayChecklist();
+announce("本日紀錄已全數清除");
+}
+}
+
+// --- Layer 4 Output & JSON ---
+
+function exportJSON() {
+const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `calendar_backup_${dateKeyFromDate(new Date())}.json`;
+a.click();
+}
+
+function triggerImport() {
+document.getElementById('importFile').click();
+}
+
+function handleImport(e) {
+const file = e.target.files[0];
+if (!file) return;
+const reader = new FileReader();
+reader.onload = (evt) => {
+try {
+const data = JSON.parse(evt.target.result);
+if (confirm("載入備份將覆蓋目前所有資料，確定嗎？")) {
+db = data;
+saveDB();
+location.reload();
+}
+} catch (err) {
+alert("JSON 格式錯誤");
+}
+};
+reader.readAsText(file);
+}
+
+function downloadTXT() {
+const entries = db[selectedDateKey] || [];
+let text = `日期：${selectedDateKey}\n\n`;
+if (entries.length === 0) text += "無紀錄";
+else {
+entries.forEach(e => {
+text += `[${e.done ? 'V' : ' '}] ${e.time || '全天'} - ${e.content}\n`;
+});
+}
+const blob = new Blob([text], { type: 'text/plain' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `schedule_${selectedDateKey}.txt`;
+a.click();
+}
+
+function sendGmail() {
+const email = document.getElementById('gmailAddress').value;
+const entries = db[selectedDateKey] || [];
+let body = `日期：${selectedDateKey}%0D%0A%0D%0A`;
+entries.forEach(e => {
+body += `[${e.done ? '已完成' : '未完成'}] ${e.time || ''} ${e.content}%0D%0A`;
+});
+const subject = `小麥麥日曆排程：${selectedDateKey}`;
+window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`);
+}
+
+function downloadICS() {
+const entries = db[selectedDateKey] || [];
+if (entries.length === 0) { alert("本日無資料可匯出"); return; }
+
+let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Maimai Calendar//ZH\n";
+const dateStripped = selectedDateKey.replace(/-/g, '');
+
+entries.forEach(e => {
+icsContent += "BEGIN:VEVENT\n";
+icsContent += `DTSTART;VALUE=DATE:${dateStripped}\n`;
+icsContent += `SUMMARY:${e.content}\n`;
+icsContent += `DESCRIPTION:時段: ${e.time}\n`;
+icsContent += "END:VEVENT\n";
+});
+icsContent += "END:VCALENDAR";
+
+const blob = new Blob([icsContent], { type: 'text/calendar' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `calendar_${selectedDateKey}.ics`;
+a.click();
+}
+
+// --- Keyboard Shortcuts ---
+
+window.addEventListener('keydown', (e) => {
+// Alt + Number
+if (e.altKey && e.key >= '1' && e.key <= '4') {
+const layer = document.getElementById(`layer${e.key - 1}`);
+if (layer) {
+layer.scrollIntoView();
+const focusable = layer.querySelector('button, h2, input, textarea');
+if (focusable) focusable.focus();
+announce(`已跳轉至區塊 ${e.key}`);
+}
+}
+// F2
+if (e.key === 'F2') {
+e.preventDefault();
+document.getElementById('quickTodo').focus();
+announce("已聚焦至待辦內容輸入框");
+}
+});
+
+// --- Initialization ---
+
+window.onload = () => {
+document.getElementById('quickDate').value = dateKeyFromDate(new Date());
+updateClock();
+setInterval(updateClock, 1000);
+renderCalendar();
+renderTodayChecklist();
+renderDayDetails(selectedDateKey);
+announce("通用日曆系統已準備就緒");
+};
+
+</script>
+</body>
+</html></html>
+info
+Google AI models may make mistakes, so double-check outputs.
+Use Arrow Up and Arrow Down to select a turn, Enter to jump to it, and Escape to return to the chat.
+Start typing a prompt to see what our models can do
+
+google
+Grounding with Google Search
+1
+
+
+Response ready.

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1150628 學員作品大廳 - 數位學習與無障礙網頁設計</title>
+    <style>
+        /* --- 全域變數：奶茶色系與字體規範 --- */
+        :root {
+            --bg-color: #faf7f2;       /* 極淺奶茶色背景 */
+            --card-bg: #ffffff;        /* 純白卡片背景 */
+            --primary-brown: #c5a992;  /* 經典奶茶色 */
+            --accent-brown: #8d8078;   /* 深焙奶茶色(文字) */
+            --soft-rose: #d4a373;      /* 暖陽色(強調) */
+            --border-color: #e6dfd5;   /* 邊框色 */
+            --text-main: #5a504a;      /* 主文字色 */
+            --text-sub: #8d8078;       /* 副文字色 */
+            --transition: all 0.4s ease;
+            --shadow-soft: 0 10px 30px rgba(197, 169, 146, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: linear-gradient(135deg, #faf7f2 0%, #f0ece2 100%);
+            color: var(--text-main);
+            font-family: "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+            line-height: 1.7;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 50px;
+        }
+
+        /* --- A11y 輔助區塊 --- */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        /* 高對比 Focus 狀態：簡約但不失清晰 */
+        :focus {
+            outline: 3px solid var(--soft-rose);
+            outline-offset: 4px;
+        }
+
+        /* --- Header 區塊 --- */
+        header {
+            text-align: center;
+            padding: 80px 20px 40px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--accent-brown);
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-sub);
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        .subtitle::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            width: 50%;
+            height: 2px;
+            background: var(--primary-brown);
+            border-radius: 2px;
+        }
+
+        /* --- Main 區塊 (簡約卡片) --- */
+        main {
+            width: 100%;
+            max-width: 1100px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: var(--transition);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .card:hover, .card:focus {
+            transform: translateY(-8px);
+            border-color: var(--primary-brown);
+            box-shadow: 0 15px 40px rgba(197, 169, 146, 0.2);
+        }
+
+        .card-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            color: var(--accent-brown);
+            margin-bottom: 15px;
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            margin-bottom: 25px;
+            flex-grow: 1;
+        }
+
+        .card-footer {
+            background: #fdfaf7;
+            padding: 10px 25px;
+            border-radius: 50px;
+            color: var(--primary-brown);
+            font-weight: bold;
+            font-size: 0.9rem;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .card:hover .card-footer {
+            background: var(--primary-brown);
+            color: #fff;
+        }
+
+        /* --- Data Panel (資料管理) --- */
+        .data-panel {
+            width: calc(100% - 40px);
+            max-width: 700px;
+            margin: 60px 20px;
+            padding: 40px;
+            background: #fff;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-color);
+        }
+
+        .data-panel h2 {
+            color: var(--accent-brown);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .data-panel p {
+            margin-bottom: 30px;
+            color: var(--text-sub);
+            font-size: 0.9rem;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: var(--transition);
+            border: none;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-export {
+            background: var(--primary-brown);
+            color: #fff;
+        }
+
+        .btn-export:hover {
+            background: var(--accent-brown);
+            transform: scale(1.02);
+        }
+
+        .btn-import {
+            background: #fff;
+            border: 1px solid var(--primary-brown);
+            color: var(--primary-brown);
+        }
+
+        .btn-import:hover {
+            background: #fdfaf7;
+            border-color: var(--accent-brown);
+            color: var(--accent-brown);
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* RWD */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.6rem; }
+            .btn-group { flex-direction: column; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>1150628 學員作品大廳</h1>
+        <p class="subtitle">數位學習與無障礙網頁設計 整合平台</p>
+    </header>
+
+    <main role="list" aria-label="作品清單">
+        <!-- 作品 1 -->
+        <a href="01 geo115exam.html" class="card" role="listitem">
+            <div class="card-icon" aria-hidden="true">🌏</div>
+            <h2 class="card-title">115學年度地理作答平台</h2>
+            <p class="card-desc">結合課程需求的地理知識測驗系統，提供語意化結構以支援視障輔具流暢操作。</p>
+            <div class="card-footer">啟動平台</div>
+        </a>
+
+        <!-- 作品 2 -->
+        <a href="02-2000cloze.html" class="card" role="listitem">
+            <div class="card-icon" aria-hidden="true">✍️</div>
+            <h2 class="card-title">兩千單無障礙克漏字</h2>
+            <p class="card-desc">專注於英語單字學習的無障礙工具，具備清晰的焦點路徑與動態狀態報讀。</p>
+            <div class="card-footer">開始練習</div>
+        </a>
+
+        <!-- 作品 3 -->
+        <a href="03-calendar.html" class="card" role="listitem">
+            <div class="card-icon" aria-hidden="true">🗓️</div>
+            <h2 class="card-title">通用日曆待辦規劃小麥麥</h2>
+            <p class="card-desc">簡約高效的時間管理模組，完美適配螢幕閱讀器與鍵盤快速導覽。</p>
+            <div class="card-footer">開啟日曆</div>
+        </a>
+    </main>
+
+    <section class="data-panel" aria-labelledby="dataPanelTitle">
+        <h2 id="dataPanelTitle">☁️ 進度雲端同步管理</h2>
+        <p>您可以將所有應用的本地進度匯出為檔案備份，或從檔案還原先前的資料。</p>
+        
+        <div class="btn-group">
+            <button type="button" class="btn btn-export" onclick="exportData()">
+                匯出全域進度檔 (JSON)
+            </button>
+            <button type="button" class="btn btn-import" onclick="document.getElementById('importFile').click()">
+                載入備份進度
+            </button>
+            <input type="file" id="importFile" class="visually-hidden" accept=".json" onchange="importData(event)">
+        </div>
+    </section>
+
+    <!-- NVDA 語音報讀區 (ARIA Live Region) -->
+    <div id="announcer" class="visually-hidden" aria-live="polite"></div>
+
+    <script>
+        /**
+         * 螢幕閱讀器報讀函數
+         */
+        function announce(msg) {
+            const announcer = document.getElementById('announcer');
+            announcer.textContent = msg;
+            setTimeout(() => {
+                if(announcer.textContent === msg) announcer.textContent = '';
+            }, 5000);
+        }
+
+        /**
+         * 匯出 LocalStorage 所有資料
+         */
+        function exportData() {
+            try {
+                const allData = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    allData[key] = localStorage.getItem(key);
+                }
+
+                if (Object.keys(allData).length === 0) {
+                    const msg = "目前沒有任何進度紀錄可供匯出。";
+                    alert(msg);
+                    announce(msg);
+                    return;
+                }
+
+                const backup = {
+                    title: "1150628_WorkHall_Backup",
+                    exportedAt: new Date().toLocaleString(),
+                    data: allData
+                };
+
+                const dataStr = JSON.stringify(backup, null, 2);
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                
+                const date = new Date();
+                const dateStr = date.toISOString().slice(0, 10);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `1150628_平台備份_${dateStr}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                const successMsg = "進度檔案匯出成功。";
+                alert(successMsg);
+                announce(successMsg);
+
+            } catch (error) {
+                const errorMsg = "匯出過程發生錯誤，請稍後再試。";
+                alert(errorMsg);
+                announce(errorMsg);
+            }
+        }
+
+        /**
+         * 匯入 JSON 並寫入 LocalStorage
+         */
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedObj = JSON.parse(e.target.result);
+
+                    if (!importedObj.data) {
+                        throw new Error("Invalid Format");
+                    }
+
+                    const confirmMsg = "您確定要載入此備份嗎？這將會覆蓋目前的進度。";
+                    if (confirm(confirmMsg)) {
+                        localStorage.clear();
+                        for (const key in importedObj.data) {
+                            localStorage.setItem(key, importedObj.data[key]);
+                        }
+                        const successMsg = "資料還原成功！系統將自動重新整理。";
+                        announce(successMsg);
+                        alert(successMsg);
+                        window.location.reload();
+                    } else {
+                        const cancelMsg = "已取消載入。";
+                        announce(cancelMsg);
+                        alert(cancelMsg);
+                    }
+
+                } catch (error) {
+                    const failMsg = "載入失敗：請確保檔案格式為正確的備份 JSON 檔。";
+                    alert(failMsg);
+                    announce(failMsg);
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
